@@ -26,7 +26,7 @@ MAX_USER_INPUT_LENGTH = 2000
 SYSTEM_PROMPT = "Ты дружелюбный помощник, отвечающий коротко и ясно."
 
 # URL API нейросети
-API_URL = "https://openrouter.ai/api/v1/chat/completions"  # Удалён лишний пробел
+API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Модель нейросети
 MODEL_NAME = "deepseek/deepseek-chat:free"
