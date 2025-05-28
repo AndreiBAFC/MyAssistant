@@ -1,6 +1,6 @@
 /test.py
 /.save
-.env  # Игнорируем файл .env
 .git
 *.log
 __pycache__
+.env
