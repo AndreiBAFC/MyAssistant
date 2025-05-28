@@ -23,8 +23,8 @@ API_KEY = os.environ['API_KEY']
 TELEGRAM_BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 
 # Логирование значений переменных окружения
-logging.info(f"API_KEY: {API_KEY}")
-logging.info(f"TELEGRAM_BOT_TOKEN: {TELEGRAM_BOT_TOKEN}")
+# logging.info(f"API_KEY: {API_KEY}")
+# logging.info(f"TELEGRAM_BOT_TOKEN: {TELEGRAM_BOT_TOKEN}")
 
 # Максимальная длина запроса пользователя
 MAX_USER_INPUT_LENGTH = 2000
