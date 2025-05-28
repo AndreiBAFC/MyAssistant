@@ -6,7 +6,7 @@ import time
 import logging
 import signal
 import sys
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # Загрузка переменных окружения из файла .env
 # load_dotenv()
