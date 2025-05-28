@@ -14,10 +14,10 @@ import sys
 # === НАСТРОЙКИ ===
 
 # Ваш API ключ для нейросети
-API_KEY = os.getenv("API_KEY", "default_api_key")
+API_KEY = os.environ['API_KEY']
 
 # Токен бота Telegram
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "default_telegram_bot_token")
+TELEGRAM_BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 
 # Максимальная длина запроса пользователя
 MAX_USER_INPUT_LENGTH = 2000
