@@ -1,3 +1,4 @@
+import os
 import telebot
 import requests
 import json
@@ -5,7 +6,6 @@ import time
 import logging
 import signal
 import sys
-import os
 
 # === НАСТРОЙКИ ===
 
