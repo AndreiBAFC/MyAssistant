@@ -7,7 +7,6 @@ import logging
 import signal
 import sys
 from gtts import gTTS  # Добавлен импорт для TTS
-# from dotenv import load_dotenv
 
 # Загрузка переменных окружения из файла .env
 # load_dotenv()
@@ -36,7 +35,7 @@ MAX_TTS_LENGTH = 3000
 SYSTEM_PROMPT = "Ты дружелюбный помощник, отвечающий коротко и ясно."
 
 # URL API нейросети
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
+API_URL = "https://openrouter.ai/api/v1/chat/completions"   
 
 # Модель нейросети
 MODEL_NAME = "deepseek/deepseek-chat:free"
@@ -95,10 +94,10 @@ def handle_message(message):
 
     # Проверка длины запроса
     if len(user_text) > MAX_USER_INPUT_LENGTH:
-        bot.reply_to(message, f"Пожалуйста, сократите ваш запрос до {MAX_USER_INPUT_LENGTH} символов или меньше.")
+        bot.send_message(message.chat.id, f"Пожалуйста, сократите ваш запрос до {MAX_USER_INPUT_LENGTH} символов или меньше.")
         return
 
-    # Отправляем сообщение "Думаю..." и сохраняем его ID
+    # Отправляем сообщение "Думаю..."
     think_message = bot.send_message(message.chat.id, "Думаю...")
 
     try:
@@ -150,8 +149,8 @@ def handle_message(message):
         else:
             logging.error(f"Ошибка при удалении сообщения: {str(e)}")
 
-    # Отправляем ответ пользователю
-    sent_message = bot.reply_to(message, reply)
+    # Отправляем ответ пользователю как обычное сообщение
+    sent_message = bot.send_message(message.chat.id, reply)
 
     # Генерация и отправка аудио, если TTS включен
     if ENABLE_TTS and reply:
@@ -161,8 +160,7 @@ def handle_message(message):
                 with open(audio_file, 'rb') as audio:
                     bot.send_voice(
                         chat_id=message.chat.id,
-                        voice=audio,
-                        reply_to_message_id=sent_message.message_id
+                        voice=audio
                     )
                 # Удаляем временный файл
                 os.remove(audio_file)
