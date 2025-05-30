@@ -6,12 +6,8 @@ import time
 import logging
 import signal
 import sys
-try:
-    from gtts import gTTS
-    TTS_AVAILABLE = True
-except ImportError:
-    TTS_AVAILABLE = False
-    logging.warning("Библиотека gTTS не установлена. Функция TTS будет отключена.")
+from gtts import gTTS  # Добавлен импорт для TTS
+# from dotenv import load_dotenv
 
 # Загрузка переменных окружения из файла .env
 # load_dotenv()
@@ -28,7 +24,7 @@ API_KEY = os.environ['API_KEY']
 TELEGRAM_BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 
 # Включение TTS (True/False)
-ENABLE_TTS = os.environ.get('ENABLE_TTS', 'False').lower() == 'true'
+ENABLE_TTS = True
 
 # Максимальная длина запроса пользователя
 MAX_USER_INPUT_LENGTH = 2000
@@ -83,12 +79,6 @@ def generate_tts(text: str, chat_id: int) -> str:
         # Генерируем аудио
         tts = gTTS(text=text, lang='ru', slow=False)
         tts.save(filename)
-        
-        # Проверяем что файл создан
-        if not os.path.exists(filename):
-            logging.error(f"Файл {filename} не был создан")
-            return None
-            
         return filename
     except Exception as e:
         logging.error(f"Ошибка генерации TTS: {str(e)}")
@@ -105,8 +95,7 @@ def handle_message(message):
 
     # Проверка длины запроса
     if len(user_text) > MAX_USER_INPUT_LENGTH:
-        bot.send_message(message.chat.id, 
-                         f"Пожалуйста, сократите ваш запрос до {MAX_USER_INPUT_LENGTH} символов или меньше.")
+        bot.reply_to(message, f"Пожалуйста, сократите ваш запрос до {MAX_USER_INPUT_LENGTH} символов или меньше.")
         return
 
     # Отправляем сообщение "Думаю..." и сохраняем его ID
@@ -161,32 +150,22 @@ def handle_message(message):
         else:
             logging.error(f"Ошибка при удалении сообщения: {str(e)}")
 
-    # Отправляем ответ пользователю БЕЗ ЦИТИРОВАНИЯ
-    sent_message = bot.send_message(message.chat.id, reply)
+    # Отправляем ответ пользователю
+    sent_message = bot.reply_to(message, reply)
 
     # Генерация и отправка аудио, если TTS включен
-    if ENABLE_TTS and reply and TTS_AVAILABLE:
+    if ENABLE_TTS and reply:
         try:
-            logging.info(f"Попытка генерации TTS для ответа длиной {len(reply)} символов")
             audio_file = generate_tts(reply, message.chat.id)
-            
             if audio_file:
-                logging.info(f"Аудиофайл создан: {audio_file} ({os.path.getsize(audio_file)} байт)")
-                
                 with open(audio_file, 'rb') as audio:
-                    # Добавляем название файла для корректной отправки
                     bot.send_voice(
                         chat_id=message.chat.id,
                         voice=audio,
-                        caption="Озвучка ответа"
+                        reply_to_message_id=sent_message.message_id
                     )
-                    logging.info("Аудио сообщение отправлено")
-                
                 # Удаляем временный файл
                 os.remove(audio_file)
-            else:
-                logging.warning("Не удалось создать аудиофайл")
-                
         except Exception as e:
             logging.error(f"Ошибка при обработке TTS: {str(e)}")
 
