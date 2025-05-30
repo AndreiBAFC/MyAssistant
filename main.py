@@ -8,11 +8,6 @@ import signal
 import sys
 from gtts import gTTS  # Добавлен импорт для TTS
 
-# Загрузка переменных окружения из файла .env
-# load_dotenv()
-
-# === НАСТРОЙКИ ===
-
 # Логирование
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -39,8 +34,6 @@ API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Модель нейросети
 MODEL_NAME = "deepseek/deepseek-chat:free"
-
-# === ИНИЦИАЛИЗАЦИЯ ===
 
 # Инициализация бота
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
@@ -84,6 +77,20 @@ def generate_tts(text: str, chat_id: int) -> str:
         return None
 
 # === ОБРАБОТЧИК СООБЩЕНИЙ ===
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    """Отправляет приветственное сообщение и меню."""
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    item1 = telebot.types.KeyboardButton("Обычный режим")
+    markup.add(item1)
+    bot.send_message(message.chat.id, "Добро пожаловать! Выберите режим:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == "Обычный режим")
+def normal_mode(message):
+    """Обрабатывает выбор обычного режима."""
+    bot.send_message(message.chat.id, "Вы выбрали обычный режим.", reply_markup=telebot.types.ReplyKeyboardRemove())
+    # Здесь можно добавить дополнительную логику для обычного режима, если потребуется
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
