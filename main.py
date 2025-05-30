@@ -6,6 +6,7 @@ import time
 import logging
 import signal
 import sys
+from gtts import gTTS  # Добавлен импорт для TTS
 # from dotenv import load_dotenv
 
 # Загрузка переменных окружения из файла .env
@@ -22,12 +23,14 @@ API_KEY = os.environ['API_KEY']
 # Токен бота Telegram
 TELEGRAM_BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 
-# Логирование значений переменных окружения
-# logging.info(f"API_KEY: {API_KEY}")
-# logging.info(f"TELEGRAM_BOT_TOKEN: {TELEGRAM_BOT_TOKEN}")
+# Включение TTS (True/False)
+ENABLE_TTS = True
 
 # Максимальная длина запроса пользователя
 MAX_USER_INPUT_LENGTH = 2000
+
+# Максимальная длина текста для TTS
+MAX_TTS_LENGTH = 3000
 
 # Внутренний промпт (роль/инструкция для нейросети)
 SYSTEM_PROMPT = "Ты дружелюбный помощник, отвечающий коротко и ясно."
@@ -37,9 +40,6 @@ API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Модель нейросети
 MODEL_NAME = "deepseek/deepseek-chat:free"
-
-# Логирование
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # === ИНИЦИАЛИЗАЦИЯ ===
 
@@ -62,6 +62,27 @@ def signal_handler(sig, frame):
 # Устанавливаем обработчик сигнала завершения
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
+
+# === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
+
+def generate_tts(text: str, chat_id: int) -> str:
+    """Генерирует аудиофайл из текста и возвращает путь к файлу."""
+    try:
+        # Проверяем длину текста
+        if len(text) > MAX_TTS_LENGTH:
+            logging.warning(f"Текст слишком длинный для TTS ({len(text)} символов)")
+            return None
+
+        # Создаем уникальное имя файла
+        filename = f"tts_{chat_id}_{int(time.time())}.mp3"
+        
+        # Генерируем аудио
+        tts = gTTS(text=text, lang='ru', slow=False)
+        tts.save(filename)
+        return filename
+    except Exception as e:
+        logging.error(f"Ошибка генерации TTS: {str(e)}")
+        return None
 
 # === ОБРАБОТЧИК СООБЩЕНИЙ ===
 
@@ -130,7 +151,23 @@ def handle_message(message):
             logging.error(f"Ошибка при удалении сообщения: {str(e)}")
 
     # Отправляем ответ пользователю
-    bot.reply_to(message, reply)
+    sent_message = bot.reply_to(message, reply)
+
+    # Генерация и отправка аудио, если TTS включен
+    if ENABLE_TTS and reply:
+        try:
+            audio_file = generate_tts(reply, message.chat.id)
+            if audio_file:
+                with open(audio_file, 'rb') as audio:
+                    bot.send_voice(
+                        chat_id=message.chat.id,
+                        voice=audio,
+                        reply_to_message_id=sent_message.message_id
+                    )
+                # Удаляем временный файл
+                os.remove(audio_file)
+        except Exception as e:
+            logging.error(f"Ошибка при обработке TTS: {str(e)}")
 
 # === ЗАПУСК БОТА ===
 
