@@ -83,6 +83,12 @@ def generate_tts(text: str, chat_id: int) -> str:
         # Генерируем аудио
         tts = gTTS(text=text, lang='ru', slow=False)
         tts.save(filename)
+        
+        # Проверяем что файл создан
+        if not os.path.exists(filename):
+            logging.error(f"Файл {filename} не был создан")
+            return None
+            
         return filename
     except Exception as e:
         logging.error(f"Ошибка генерации TTS: {str(e)}")
@@ -99,7 +105,6 @@ def handle_message(message):
 
     # Проверка длины запроса
     if len(user_text) > MAX_USER_INPUT_LENGTH:
-        # Изменено: отправка без цитирования
         bot.send_message(message.chat.id, 
                          f"Пожалуйста, сократите ваш запрос до {MAX_USER_INPUT_LENGTH} символов или меньше.")
         return
@@ -162,16 +167,26 @@ def handle_message(message):
     # Генерация и отправка аудио, если TTS включен
     if ENABLE_TTS and reply and TTS_AVAILABLE:
         try:
+            logging.info(f"Попытка генерации TTS для ответа длиной {len(reply)} символов")
             audio_file = generate_tts(reply, message.chat.id)
+            
             if audio_file:
+                logging.info(f"Аудиофайл создан: {audio_file} ({os.path.getsize(audio_file)} байт)")
+                
                 with open(audio_file, 'rb') as audio:
-                    # Отправляем аудио как самостоятельное сообщение
+                    # Добавляем название файла для корректной отправки
                     bot.send_voice(
                         chat_id=message.chat.id,
-                        voice=audio
+                        voice=audio,
+                        caption="Озвучка ответа"
                     )
+                    logging.info("Аудио сообщение отправлено")
+                
                 # Удаляем временный файл
                 os.remove(audio_file)
+            else:
+                logging.warning("Не удалось создать аудиофайл")
+                
         except Exception as e:
             logging.error(f"Ошибка при обработке TTS: {str(e)}")
 
