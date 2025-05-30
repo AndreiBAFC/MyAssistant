@@ -6,8 +6,12 @@ import time
 import logging
 import signal
 import sys
-from gtts import gTTS  # Добавлен импорт для TTS
-# from dotenv import load_dotenv
+try:
+    from gtts import gTTS
+    TTS_AVAILABLE = True
+except ImportError:
+    TTS_AVAILABLE = False
+    logging.warning("Библиотека gTTS не установлена. Функция TTS будет отключена.")
 
 # Загрузка переменных окружения из файла .env
 # load_dotenv()
@@ -24,7 +28,7 @@ API_KEY = os.environ['API_KEY']
 TELEGRAM_BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 
 # Включение TTS (True/False)
-ENABLE_TTS = True
+ENABLE_TTS = os.environ.get('ENABLE_TTS', 'False').lower() == 'true'
 
 # Максимальная длина запроса пользователя
 MAX_USER_INPUT_LENGTH = 2000
@@ -95,7 +99,9 @@ def handle_message(message):
 
     # Проверка длины запроса
     if len(user_text) > MAX_USER_INPUT_LENGTH:
-        bot.reply_to(message, f"Пожалуйста, сократите ваш запрос до {MAX_USER_INPUT_LENGTH} символов или меньше.")
+        # Изменено: отправка без цитирования
+        bot.send_message(message.chat.id, 
+                         f"Пожалуйста, сократите ваш запрос до {MAX_USER_INPUT_LENGTH} символов или меньше.")
         return
 
     # Отправляем сообщение "Думаю..." и сохраняем его ID
@@ -150,19 +156,19 @@ def handle_message(message):
         else:
             logging.error(f"Ошибка при удалении сообщения: {str(e)}")
 
-    # Отправляем ответ пользователю
-    sent_message = bot.reply_to(message, reply)
+    # Отправляем ответ пользователю БЕЗ ЦИТИРОВАНИЯ
+    sent_message = bot.send_message(message.chat.id, reply)
 
     # Генерация и отправка аудио, если TTS включен
-    if ENABLE_TTS and reply:
+    if ENABLE_TTS and reply and TTS_AVAILABLE:
         try:
             audio_file = generate_tts(reply, message.chat.id)
             if audio_file:
                 with open(audio_file, 'rb') as audio:
+                    # Отправляем аудио как самостоятельное сообщение
                     bot.send_voice(
                         chat_id=message.chat.id,
-                        voice=audio,
-                        reply_to_message_id=sent_message.message_id
+                        voice=audio
                     )
                 # Удаляем временный файл
                 os.remove(audio_file)
