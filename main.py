@@ -78,19 +78,30 @@ def generate_tts(text: str, chat_id: int) -> str:
 
 # === ОБРАБОТЧИК СООБЩЕНИЙ ===
 
+def create_menu_markup():
+    """Создает клавиатуру с основным меню."""
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    item1 = telebot.types.KeyboardButton("Обычный режим")
+    item2 = telebot.types.KeyboardButton("Меню")
+    markup.add(item1, item2)
+    return markup
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     """Отправляет приветственное сообщение и меню."""
-    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    item1 = telebot.types.KeyboardButton("Обычный режим")
-    markup.add(item1)
+    markup = create_menu_markup()
     bot.send_message(message.chat.id, "Добро пожаловать! Выберите режим:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == "Меню")
+def show_menu(message):
+    """Отображает меню."""
+    markup = create_menu_markup()
+    bot.send_message(message.chat.id, "Выберите режим:", reply_markup=markup)
 
 @bot.message_handler(func=lambda message: message.text == "Обычный режим")
 def normal_mode(message):
     """Обрабатывает выбор обычного режима."""
-    bot.send_message(message.chat.id, "Вы выбрали обычный режим.", reply_markup=telebot.types.ReplyKeyboardRemove())
-    # Здесь можно добавить дополнительную логику для обычного режима, если потребуется
+    bot.send_message(message.chat.id, "Вы выбрали обычный режим.")
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
