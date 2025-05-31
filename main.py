@@ -194,6 +194,12 @@ def send_welcome(message):
     markup = create_main_menu_markup()
     bot.send_message(message.chat.id, "Добро пожаловать! Выберите режим:", reply_markup=markup)
 
+@bot.message_handler(commands=['menu'])
+def show_menu(message):
+    """Отображает меню."""
+    markup = create_main_menu_markup()
+    bot.send_message(message.chat.id, "Выберите режим:", reply_markup=markup)
+
 @bot.message_handler(func=lambda message: message.text == "Обычный режим")
 def normal_mode(message):
     """Обрабатывает выбор обычного режима."""
